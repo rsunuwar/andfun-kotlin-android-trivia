@@ -16,24 +16,19 @@
 
 package com.example.android.navigation
 
-import android.content.ActivityNotFoundException
 import android.content.Intent
-import androidx.databinding.DataBindingUtil
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.core.app.ShareCompat
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.core.app.ShareCompat
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import com.example.android.navigation.databinding.FragmentGameWonBinding
-import android.content.pm.ResolveInfo
-import android.content.pm.PackageManager
-
 
 
 class GameWonFragment : Fragment() {
@@ -46,21 +41,47 @@ class GameWonFragment : Fragment() {
             view.findNavController().navigate(
                     GameWonFragmentDirections.actionGameWonFragmentToGameFragment())
         }
-        var args = GameWonFragmentArgs.fromBundle(requireArguments())
-        Toast.makeText(context,
-                "NumCorrect: ${args.numCorrect}, NumQuestions: ${args.numQuestions}",
-                Toast.LENGTH_LONG).show()
-        // TODO (01) Add setHasOptionsMenu(true)
-        // This allows onCreateOptionsMenu to be called
+        setHasOptionsMenu(true)
         return binding.root
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.winner_menu, menu)
 
-    // TODO (02) Create getShareIntent method
-    // TODO (03) Create shareSuccess method
-    // TODO (04) Override and fill out onCreateOptionsMenu
-    // Inflate the winner_menu and set the share menu item to invisible if the activity doesn't
-    // resolve
-    // TODO (05) Override onOptionsItemSelected
-    // Call the shareSuccess method when the item id matches R.id.share
+        // check if the activity resolves
+        if (null == getShareIntent().resolveActivity(activity!!.packageManager)) {
+            // hide the menu item if it doesn't resolve
+            menu.findItem(R.id.share)?.isVisible = false
+        }
+    }
+
+    private fun getShareIntent(): Intent {
+        val args = GameWonFragmentArgs.fromBundle(requireArguments())
+
+//        val shareIntent = Intent(Intent.ACTION_SEND)
+//        shareIntent.setType("text/plain")
+//            .putExtra(
+//                Intent.EXTRA_TEXT,
+//                getString(R.string.share_success_text, args.numCorrect, args.numQuestions)
+//            )
+//        return shareIntent
+
+        // ShareCompat fluent api - uses method chaining
+        return ShareCompat.IntentBuilder.from(activity!!)
+            .setText(getString(R.string.share_success_text, args.numCorrect, args.numQuestions))
+            .setType("text/plain")
+            .intent
+    }
+
+    private fun shareSuccess() {
+        startActivity(getShareIntent())
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.share -> shareSuccess()
+        }
+        return super.onOptionsItemSelected(item)
+    }
 }
